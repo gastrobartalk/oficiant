@@ -1,395 +1,120 @@
 import { useState } from "react";
 import { getPlayer, savePlayer } from "../utils/player";
+import { getRank } from "../utils/rank";
+import { BALANCE } from "../config";
 
+const AVATARS = ["🙂", "👨‍🍳", "👩‍🍳", "🍷", "☕", "⭐", "🍸", "🧑‍🍳"];
 
 function Profile() {
+  const [player, setPlayer] = useState(getPlayer());
+  const [nickname, setNickname] = useState(player.nickname);
+  const [avatar, setAvatar] = useState(player.avatar);
+  const [saved, setSaved] = useState(false);
 
+  const rank = getRank(player);
+  const changed = nickname !== player.nickname || avatar !== player.avatar;
 
-const savedPlayer = getPlayer();
+  function save() {
+    const updated = { ...player, nickname: nickname.trim(), avatar };
+    savePlayer(updated);
+    setPlayer(updated);
+    setSaved(true);
+  }
 
+  return (
+    <div className="screen">
+      <p className="eyebrow">Профиль</p>
+      <h1 className="page-title">
+        {avatar} {nickname || "Без никнейма"}
+      </h1>
 
-const [player, setPlayer] = useState(savedPlayer);
+      <div className="card">
+        <div className="rank">
+          <div className="rank__icon">{rank.icon}</div>
+          <div style={{ flex: 1 }}>
+            <div className="rank__title">{rank.title}</div>
+            <div className="rank__next">
+              {rank.next
+                ? `До ранга «${rank.next}» ${rank.needed ?? "—"} рейтинга`
+                : "Максимальный ранг"}
+            </div>
+          </div>
+        </div>
+        <div className="bar">
+          <div className="bar__fill" style={{ width: `${rank.progress}%` }} />
+        </div>
+        {player.isTrainee && (
+          <p className="muted" style={{ marginBottom: 0 }}>
+            Рейтинговые игры откроет менеджер после первой аттестации.
+          </p>
+        )}
+      </div>
 
+      <div className="metrics">
+        <div className="metric">
+          <div className="metric__value">{player.rating}</div>
+          <div className="metric__label">Рейтинг</div>
+        </div>
+        <div className="metric">
+          <div className="metric__value">{player.tea}</div>
+          <div className="metric__label">Чай</div>
+        </div>
+        <div className="metric">
+          <div className="metric__value">{player.rankedGames}</div>
+          <div className="metric__label">Игр в рейтинге</div>
+        </div>
+        <div className="metric">
+          <div className="metric__value">{player.wins}</div>
+          <div className="metric__label">Побед</div>
+        </div>
+        <div className="metric">
+          <div className="metric__value">{player.winStreak}</div>
+          <div className="metric__label">Серия побед</div>
+        </div>
+        <div className="metric">
+          <div className="metric__value">{player.loginStreak}</div>
+          <div className="metric__label">Дней подряд</div>
+        </div>
+      </div>
 
-const [nickname, setNickname] = useState(
-savedPlayer.nickname
-);
+      <h2 className="page-title stack">Оформление</h2>
 
+      <div className="avatars">
+        {AVATARS.map((item) => (
+          <button
+            key={item}
+            className={avatar === item ? "avatar avatar--active" : "avatar"}
+            onClick={() => {
+              setAvatar(item);
+              setSaved(false);
+            }}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
 
-const [avatar, setAvatar] = useState(
-savedPlayer.avatar
-);
+      <input
+        className="field"
+        value={nickname}
+        maxLength={16}
+        placeholder="Никнейм"
+        onChange={(e) => {
+          setNickname(e.target.value);
+          setSaved(false);
+        }}
+      />
 
+      <button className="btn" onClick={save} disabled={!changed}>
+        {saved && !changed ? "Сохранено" : "Сохранить"}
+      </button>
 
-
-const avatars = [
-"🙂",
-"👨‍🍳",
-"👩‍🍳",
-"🍷",
-"☕",
-"⭐",
-"👤"
-];
-
-
-
-
-function saveProfile() {
-
-
-const updatedPlayer = {
-
-
-...player,
-
-
-nickname: nickname,
-
-
-avatar: avatar
-
-
-};
-
-
-
-savePlayer(updatedPlayer);
-
-
-setPlayer(updatedPlayer);
-
-
+      <p className="muted stack">
+        Победа даёт от 17 до 21 рейтинга, поражение отнимает от 14 до 20.
+        Первые {BALANCE.CALIBRATION_GAMES} рейтинговых игр рейтинг не снижают.
+      </p>
+    </div>
+  );
 }
-
-
-
-
-let rank = "Стажёр";
-
-
-let nextRank = 501;
-
-
-
-if (player.rating >= 501) {
-
-
-rank = "Официант";
-
-
-nextRank = 1001;
-
-
-}
-
-
-
-if (player.rating >= 1001) {
-
-
-rank = "Крутой официант";
-
-
-nextRank = 1501;
-
-
-}
-
-
-
-if (player.rating >= 1501) {
-
-
-rank = "Машина сервиса";
-
-
-nextRank = 2000;
-
-
-}
-
-
-
-
-const progress = Math.min(
-
-100,
-
-((player.rating % 500) / 500) * 100
-
-);
-
-
-
-
-
-
-return (
-
-
-<div className="app">
-
-
-<div className="card">
-
-
-
-<h1>
-👤 Профиль
-</h1>
-
-
-
-
-<h2>
-
-{avatar} {nickname || player.name}
-
-</h2>
-
-
-
-
-<h3>
-Выбери аватар
-</h3>
-
-
-
-
-<div>
-
-
-{avatars.map((item)=>(
-
-
-<button
-
-key={item}
-
-onClick={() => setAvatar(item)}
-
->
-
-{item}
-
-</button>
-
-
-))}
-
-
-</div>
-
-
-
-
-
-<h3>
-Никнейм
-</h3>
-
-
-
-
-<input
-
-
-value={nickname}
-
-
-onChange={(e)=>
-
-setNickname(e.target.value)
-
-}
-
-
-placeholder="Введите никнейм"
-
-
-/>
-
-
-
-
-<br />
-
-
-
-
-
-<button
-
-onClick={saveProfile}
-
->
-
-💾 Сохранить профиль
-
-</button>
-
-
-
-
-
-
-
-<div className="stats">
-
-
-
-
-
-<p>
-
-🏆 Ранг:
-
-<br />
-
-{rank}
-
-</p>
-
-
-
-
-
-<p>
-
-⭐ Рейтинг:
-
-<br />
-
-{player.rating}
-
-</p>
-
-
-
-
-
-<p>
-
-☕ Чай:
-
-<br />
-
-{player.tea}
-
-</p>
-
-
-
-
-
-<p>
-
-⚡ Активность:
-
-<br />
-
-{player.activity}
-
-</p>
-
-
-
-
-
-<p>
-
-🎮 Игр:
-
-<br />
-
-{player.games}
-
-</p>
-
-
-
-
-
-<p>
-
-🏅 Побед:
-
-<br />
-
-{player.wins}
-
-</p>
-
-
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<h3>
-
-Прогресс до следующего ранга
-
-</h3>
-
-
-
-
-
-<div className="progress">
-
-
-<div
-
-
-style={{
-
-
-width: `${progress}%`
-
-
-}}
-
-
-/>
-
-
-</div>
-
-
-
-
-
-<p>
-
-{player.rating} / {nextRank}
-
-</p>
-
-
-
-
-
-</div>
-
-
-</div>
-
-
-);
-
-
-}
-
-
 
 export default Profile;

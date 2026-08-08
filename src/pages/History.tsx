@@ -1,126 +1,50 @@
-import { useState } from "react";
 import { getHistory } from "../utils/history";
-import type { GameHistory } from "../utils/history";
-
 
 function History() {
-
-
-  const [history] = useState<GameHistory[]>(
-    getHistory()
-  );
-
-
+  const history = getHistory();
 
   return (
+    <div className="screen">
+      <p className="eyebrow">История</p>
+      <h1 className="page-title">Сыгранные партии</h1>
 
-    <div className="app">
-
-      <div className="card">
-
-
-        <h1>
-          📜 История игр
-        </h1>
-
-
-
-        {history.length === 0 ? (
-
-
-          <p>
-            Игр пока нет
-          </p>
-
-
-        ) : (
-
-
-          history.map((game) => (
-
-
-            <div
-              key={game.id}
-              className="stats"
-            >
-
-
-              <h3>
-
-                {game.result === "win"
-
-                  ? "🏆 Победа"
-
-                  : "❌ Поражение"
-
+      {history.length === 0 ? (
+        <div className="empty">
+          Здесь появятся ваши партии.
+          <br />
+          Начните с тренировки — она без риска для рейтинга.
+        </div>
+      ) : (
+        <div className="card">
+          {history.map((game) => (
+            <div className="row" key={game.id}>
+              <div
+                className={
+                  game.result === "win" ? "row__score good" : "row__score bad"
                 }
-
-              </h3>
-
-
-
-              <p>
-
-                ⭐ Рейтинг:
-
-                {" "}
-
-                {game.ratingChange > 0
-
-                  ? `+${game.ratingChange}`
-
-                  : game.ratingChange
-
-                }
-
-              </p>
-
-
-
-              <p>
-
-                ☕ Чай:
-
-                {" "}
-
-                {game.teaChange > 0
-
-                  ? `+${game.teaChange}`
-
-                  : game.teaChange
-
-                }
-
-              </p>
-
-
-
-              <p>
-
-                📅 {game.date}
-
-              </p>
-
-
-
+              >
+                {game.score}
+              </div>
+              <div className="row__meta">
+                {game.mode === "ranked" ? "Рейтинговая" : "Тренировка"}
+                <br />
+                {game.date}
+              </div>
+              <div className="row__delta">
+                {game.mode === "ranked" && (
+                  <div className={game.ratingChange >= 0 ? "good" : "bad"}>
+                    {game.ratingChange > 0 ? "+" : ""}
+                    {game.ratingChange}
+                  </div>
+                )}
+                <div className="brass">+{game.teaChange} ☕</div>
+              </div>
             </div>
-
-
-          ))
-
-        )}
-
-
-
-      </div>
-
-
+          ))}
+        </div>
+      )}
     </div>
-
   );
-
-
 }
-
 
 export default History;

@@ -1,28 +1,58 @@
+import { useState } from "react";
+
 type LoginProps = {
   onLogin: () => void;
 };
 
 function Login({ onLogin }: LoginProps) {
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  function handleSubmit() {
+    if (!login.trim() || !password.trim()) {
+      setError("Введите логин и пароль — их выдаёт менеджер");
+      return;
+    }
+    setError("");
+    onLogin();
+  }
+
   return (
-    <div className="app">
-      <div className="card">
-        <h1>☕ Официант</h1>
+    <div className="screen screen--plain">
+      <p className="eyebrow">Обучение персонала</p>
+      <h1 className="brand" style={{ marginBottom: 28 }}>
+        ОФИЦИ<span>АНТ</span>
+      </h1>
 
-        <p className="subtitle">
-          Обучение и рейтинг персонала
+      <input
+        className="field"
+        placeholder="Логин"
+        value={login}
+        onChange={(e) => setLogin(e.target.value)}
+      />
+      <input
+        className="field"
+        type="password"
+        placeholder="Пароль"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+      />
+
+      {error && (
+        <p className="muted bad" style={{ marginTop: 0 }}>
+          {error}
         </p>
+      )}
 
-        <input placeholder="Логин" />
+      <button className="btn" onClick={handleSubmit}>
+        Войти
+      </button>
 
-        <input 
-          type="password"
-          placeholder="Пароль"
-        />
-
-        <button onClick={onLogin}>
-          ВОЙТИ
-        </button>
-      </div>
+      <p className="muted" style={{ textAlign: "center", marginTop: 22 }}>
+        Пока проверки пароля нет — она появится вместе с аккаунтами.
+      </p>
     </div>
   );
 }
