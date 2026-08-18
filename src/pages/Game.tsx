@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BALANCE, CATEGORIES } from "../config";
 import { getPlayer, savePlayer } from "../utils/player";
 import { addHistory } from "../utils/history";
@@ -23,28 +23,13 @@ function Game({ mode, onExit, onReplay }: GameProps) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [chosen, setChosen] = useState<Answer | null>(null);
   const [result, setResult] = useState<GameResult | null>(null);
+  const [askExit, setAskExit] = useState(false);
 
   const question = questions[index];
   const category = CATEGORIES[question.category];
 
   // Порядок ответов перемешивается один раз на вопрос
   const options = useMemo(() => shuffle(question.answers), [question]);
-
-  // Таймер. Перезапускается на каждом вопросе — поэтому больше не «залипает».
-  useEffect(() => {
-    if (phase !== "playing") return;
-    setSeconds(BALANCE.SECONDS_PER_QUESTION);
-    const id = setInterval(() => setSeconds((s) => s - 1), 1000);
-    return () => clearInterval(id);
-  }, [index, phase]);
-
-  // Время вышло — засчитываем как неотвеченный вопрос
-  useEffect(() => {
-    if (phase === "playing" && seconds <= 0) {
-      answer(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seconds, phase]);
 
   function answer(picked: Answer | null) {
     const weight = questionWeight(question);
@@ -64,14 +49,30 @@ function Game({ mode, onExit, onReplay }: GameProps) {
     setPhase("review");
   }
 
-  function next(allTurns: Turn[]) {
-    if (index < questions.length - 1) {
-      setIndex(index + 1);
-      setChosen(null);
-      setPhase("playing");
-      return;
-    }
+  // Таймер держит своё время внутри себя, поэтому «нулевой» счётчик
+  // с прошлого вопроса больше не может пропустить следующий.
+  const answerRef = useRef(answer);
+  answerRef.current = answer;
 
+  useEffect(() => {
+    if (phase !== "playing") return;
+
+    let left = BALANCE.SECONDS_PER_QUESTION;
+    setSeconds(left);
+
+    const id = setInterval(() => {
+      left -= 1;
+      setSeconds(left);
+      if (left <= 0) {
+        clearInterval(id);
+        answerRef.current(null);
+      }
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [index, phase]);
+
+  function finishGame(allTurns: Turn[]) {
     const player = getPlayer();
     const outcome = applyResult(player, allTurns, mode);
     savePlayer(player);
@@ -95,6 +96,59 @@ function Game({ mode, onExit, onReplay }: GameProps) {
     setPhase("finished");
   }
 
+  function next() {
+    if (index < questions.length - 1) {
+      setIndex(index + 1);
+      setChosen(null);
+      setPhase("playing");
+      return;
+    }
+    finishGame(turns);
+  }
+
+  // Выход из тренировки — свободный. Выход из рейтинговой — поражение.
+  function requestExit() {
+    if (mode === "training") {
+      onExit();
+    } else {
+      setAskExit(true);
+    }
+  }
+
+  function forfeit() {
+    const unanswered: Turn[] = questions.slice(turns.length).map((q) => ({
+      question: q,
+      quality: 0,
+      points: 0,
+      max: 2 * questionWeight(q),
+      timedOut: true,
+    }));
+    setAskExit(false);
+    finishGame([...turns, ...unanswered]);
+  }
+
+  // ---------- Подтверждение выхода ----------
+  if (askExit) {
+    return (
+      <div className="screen screen--plain">
+        <h2 className="page-title">Выйти из рейтинговой игры?</h2>
+        <p className="muted">
+          Незаконченная рейтинговая партия засчитывается как поражение,
+          а неотвеченные вопросы — как нулевые. Тренировка так не работает:
+          из неё можно выйти в любой момент без последствий.
+        </p>
+        <div className="stack">
+          <button className="btn" onClick={() => setAskExit(false)}>
+            Вернуться к игре
+          </button>
+          <button className="btn btn--ghost" onClick={forfeit}>
+            Выйти и засчитать поражение
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ---------- Итог партии ----------
   if (phase === "finished" && result) {
     return (
@@ -107,13 +161,16 @@ function Game({ mode, onExit, onReplay }: GameProps) {
           <div className="receipt__head">
             <div
               className={
-                result.win ? "receipt__score receipt__score--win" : "receipt__score"
+                result.win
+                  ? "receipt__score receipt__score--win"
+                  : "receipt__score"
               }
             >
               {result.score}
             </div>
             <div className="receipt__verdict">
-              {result.win ? "Победа" : "Поражение"} · порог {BALANCE.WIN_THRESHOLD}
+              {result.win ? "Победа" : "Поражение"} · порог{" "}
+              {BALANCE.WIN_THRESHOLD}
             </div>
           </div>
 
@@ -147,15 +204,14 @@ function Game({ mode, onExit, onReplay }: GameProps) {
 
         {result.calibration && (
           <p className="muted stack">
-            Калибровочная игра — рейтинг пока не снижается. Осталось{" "}
-            {Math.max(0, BALANCE.CALIBRATION_GAMES - getPlayer().rankedGames)} из{" "}
-            {BALANCE.CALIBRATION_GAMES}.
+            Калибровочная игра — рейтинг пока не снижается.
           </p>
         )}
 
         {result.streakBonus && (
-          <p className="muted stack brass">
-            Серия из {BALANCE.WIN_STREAK_STEP} побед подряд — бонусный чай начислен.
+          <p className="stack brass">
+            Серия из {BALANCE.WIN_STREAK_STEP} побед подряд — бонусный чай
+            начислен.
           </p>
         )}
 
@@ -215,7 +271,7 @@ function Game({ mode, onExit, onReplay }: GameProps) {
           {question.explain}
         </div>
 
-        <button className="btn" onClick={() => next(turns)}>
+        <button className="btn" onClick={next}>
           {index < questions.length - 1 ? "Следующий вопрос" : "Показать итог"}
         </button>
       </div>
@@ -253,7 +309,7 @@ function Game({ mode, onExit, onReplay }: GameProps) {
         </button>
       ))}
 
-      <button className="btn btn--quiet stack" onClick={onExit}>
+      <button className="btn btn--quiet stack" onClick={requestExit}>
         Выйти из игры
       </button>
     </div>

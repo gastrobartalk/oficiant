@@ -178,6 +178,17 @@ input {
   color: var(--muted);
 }
 
+.form-error {
+  margin: 2px 0 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #FFD9E0;
+  background: rgba(180, 72, 95, 0.18);
+  border: 1px solid var(--wine);
+  border-radius: var(--radius);
+}
+
 /* ---------- Показатели ---------- */
 
 .metrics {

@@ -40,11 +40,7 @@ function Login({ onLogin }: LoginProps) {
         onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
       />
 
-      {error && (
-        <p className="muted bad" style={{ marginTop: 0 }}>
-          {error}
-        </p>
-      )}
+      {error && <p className="form-error">{error}</p>}
 
       <button className="btn" onClick={handleSubmit}>
         Войти

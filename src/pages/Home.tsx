@@ -35,13 +35,13 @@ function Home({ dailyBonus, onStart, onOpen }: HomeProps) {
 
       <div className="card stack">
         <div className="rank">
-          <div className="rank__icon">{rank.icon}</div>
+          <div className="rank__icon">{player.avatar}</div>
           <div style={{ flex: 1 }}>
             <div className="rank__title">
               {player.nickname || "Без никнейма"}
             </div>
             <div className="rank__next">
-              {rank.title}
+              {rank.icon} {rank.title}
               {rank.needed !== null && ` · до «${rank.next}» ${rank.needed}`}
             </div>
           </div>

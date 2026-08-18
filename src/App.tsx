@@ -21,6 +21,7 @@ function App() {
   const [page, setPage] = useState<Page>("home");
   const [mode, setMode] = useState<Mode>("training");
   const [bonus, setBonus] = useState(0);
+  const [gameKey, setGameKey] = useState(0);
 
   function handleLogin() {
     setBonus(claimDailyBonus());
@@ -33,6 +34,7 @@ function App() {
 
   function startGame(selected: Mode) {
     setMode(selected);
+    setGameKey((n) => n + 1); // новый ключ = игра начинается заново
     setPage("game");
   }
 
@@ -42,7 +44,12 @@ function App() {
         <Home dailyBonus={bonus} onStart={startGame} onOpen={setPage} />
       )}
       {page === "game" && (
-        <Game mode={mode} onExit={() => setPage("home")} onReplay={startGame} />
+        <Game
+          key={gameKey}
+          mode={mode}
+          onExit={() => setPage("home")}
+          onReplay={startGame}
+        />
       )}
       {page === "history" && <History />}
       {page === "profile" && <Profile />}
