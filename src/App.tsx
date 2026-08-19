@@ -69,8 +69,10 @@ function App() {
               }
             }}
           >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
+            <span className="nav__pill">
+              <span>{item.icon}</span>
+              <span className="nav__label">{item.label}</span>
+            </span>
           </button>
         ))}
       </nav>

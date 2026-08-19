@@ -505,6 +505,27 @@ input {
   color: var(--brass);
 }
 
+/* капсула-подложка под активным разделом */
+.nav__item--active .nav__pill {
+  background: rgba(201, 162, 39, 0.16);
+  border: 1px solid rgba(201, 162, 39, 0.45);
+}
+
+.nav__pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  transition: background 0.15s ease;
+}
+
+.nav__item--active .nav__label {
+  font-weight: 700;
+}
+
 /* ---------- Мелочи ---------- */
 
 .muted {

@@ -22,8 +22,18 @@ export type Player = {
 
 const STORAGE_KEY = "player";
 
+// Игровой день начинается в 6 утра по местному времени телефона.
+// Официант, закончивший смену в 2 часа ночи, остаётся во «вчера» —
+// его стрик и лимиты не ломаются на полуночи.
+const DAY_STARTS_AT = 6; // час
+
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  now.setHours(now.getHours() - DAY_STARTS_AT);
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function daysBetween(from: string, to: string): number {
